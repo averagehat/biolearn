@@ -117,3 +117,5 @@ pyplot.scatter(input[:,0], input[:,1], c=clusters)
 pyplot.scatter(centers[:,0], centers[:,1], marker='x', s=300, linewidth=4, c='black')
 pyplot.show()
 
+
+
