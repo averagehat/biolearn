@@ -8,14 +8,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils import slider
 #G = nx.read_pajek('Sampson.paj')
-def drawgraph(G, **kwargs): 
-    fig = plt.figure(figsize = (15, 10))
+def drawgraph(G, edgekey='weight', big=False, **kwargs):
+    if big: fig = plt.figure(figsize = (15, 10))
     pos=nx.spring_layout(G)
     nx.draw_networkx(G, pos=pos, **kwargs)
-    edge_labels=dict([((u,v,),d['kmer'])
-                     for u,v,d in G.edges(data=True)])
-    nx.draw_networkx_edge_labels(G,pos,edge_labels=edge_labels)#, **kwargs)
-    plt.show() 
+    if edgekey:
+        edge_labels=dict([((u,v,),d[edgekey])
+                         for u,v,d in G.edges(data=True)])
+        nx.draw_networkx_edge_labels(G,pos,edge_labels=edge_labels)#, **kwargs)
+    plt.show()
 #NOTE: requires graphviz
     #nx.write_dot(G,'graph.dot')
 #dot -Tpng graph.dot > graph.png
@@ -31,7 +32,7 @@ yield_pathgraph = compose(F(imap, info_fromkmer), slider)
 def make_pathgraph(s, k=None):
     G = nx.DiGraph()
     if type(s) == list and not k:
-       G.add_edges_from(imap(info_fromkmer, s)) 
+       G.add_edges_from(imap(info_fromkmer, s))
     G.add_edges_from(yield_pathgraph(s, k))
     return G
 
@@ -60,7 +61,7 @@ def walk(G, vstd, cycle, start, current=None, call=0):
 filterfst = compose(next, ifilter)
 
 def e_cycle(G, vstd=set(), cycle=(), call=0):
-    if len(vstd) == len(G.edges()): return cycle 
+    if len(vstd) == len(G.edges()): return cycle
 
     def valid(N):
         edges=G.edges(N)
@@ -69,8 +70,8 @@ def e_cycle(G, vstd=set(), cycle=(), call=0):
     if not cycle:
         valid_start = random.choice(G.nodes()) # 6
         cycle = tuple([valid_start])
-    else: 
-        valid_start = filterfst(valid, cycle) 
+    else:
+        valid_start = filterfst(valid, cycle)
     _vstd, _cycle = walk(G,  vstd, cycle, valid_start)
     return e_cycle(G, _vstd, _cycle, call+1)
 
@@ -79,7 +80,7 @@ def e_cycle(G, vstd=set(), cycle=(), call=0):
 
 _in = "TAATGCCATGGGATGTT"
 res = make_pathgraph(_in, 3)
-#drawgraph(res)
+#drawgraph(res, edgekey='kmer')
 G = nx.DiGraph()
 G.add_edges_from([(0 , 3),
 (1 , 0),

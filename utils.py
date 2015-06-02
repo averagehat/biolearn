@@ -1,4 +1,4 @@
-from __future__ import print_function 
+from __future__ import print_function
 from func import compose_all, compose, starcompose, dictzip
 from fn import F, _ as X
 from itertools import groupby, starmap, imap, ifilter, izip
@@ -10,7 +10,7 @@ def slider(seq, window, start=0):#, stop=None):
     for idx  in xrange(N-window+1):
         yield seq[idx:idx+window]
 
-    
+filterfst = compose(next, ifilter)
 
 assert list(slider([0, 1, 2], 2)) == [ [0,1], [1,2] ]
 
@@ -38,7 +38,7 @@ def make_ovrlp_graph(kmers):
     def update(M, pre, suff):
          sfx, suffg = suff
          nbrs = imap(X[0], ifilter(X[1]==sfx, pre))
-         nbr_idxs = map(D.__getitem__, nbrs) 
+         nbr_idxs = map(D.__getitem__, nbrs)
          s_idxs = map(D.__getitem__, suffg)
          M[ s_idxs, nbr_idxs] = 1
     pre, suff = groupby(kmers, X[:ov]), groupby(kmers, X[-ov:])
@@ -55,13 +55,13 @@ def printgraph(D, M):
     with open('overlap.txt', 'w') as out:
         idx_kmer_map = dict(map(reversed, D.items()))
         for kmer, idx in D.items():
-            for nbr in M[idx].nonzero()[0]: 
+            for nbr in M[idx].nonzero()[0]:
                 print(form(kmer, idx_kmer_map[nbr]), file=out)
-        
-getkmers = compose(F(filter, str.strip), mc('split', '\n')) 
+
+getkmers = compose(F(filter, str.strip), mc('split', '\n'))
 slv_overlap=compose(starcompose(printgraph, make_ovrlp_graph), getkmers)
 
-slv_overlap(open('../../Downloads/rosalind_4b.txt').read())
+#slv_overlap(open('../../Downloads/rosalind_4b.txt').read())
 
 exp='''
 AGGCA -> GGCAT

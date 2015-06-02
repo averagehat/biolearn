@@ -1,0 +1,25 @@
+
+debruijn graph is MultiDigraph (can have multiple overlapping edges), where each edge is a kmer representing an overlap between two kmers, and the 
+nodes are k-1mers. 
+
+
+"even" edges (same out and in-degree) allow one to visit a node without getting stuck. 
+Eulerian walk visis each edge once 
+
+given a string, find all kmers.
+for each kmer, create two nodes (k-1)mers, and edge (the kmer). 
+Each node is unique, but a given pair may have multiple edges (signifying repeated kmers)
+
+Eulerian walk may be non-unique.  (because of repeats), making it impossible to accurately reconstruct the original string. (order the kmers)
+gaps or uneven coverage (more of one kmer than another) can cause problems. (missing nodes, unbalanced nodes)
+so, De Bruijn assemblies give up on unsolvable repeats, and yield fragmented assembiles.
+
+instead of treating reads as kmers, kmers are built independently from each read. 
+
+kmers are very often repeated -- number of kmers is stored as weight of edge. 
+constructing De Bruijn graph is O(N); walk is O(N)
+
+
+Overlap Layout Consensus assembly
+
+BWA is like bowtie (uses Burrows-Wheeler transform), but allows indels
