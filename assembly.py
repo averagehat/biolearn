@@ -1,4 +1,5 @@
 import networkx as nx
+import itertools
 from func import compose_all, compose, starcompose, dictzip, pmap
 from fn import F, _ as X
 import random
@@ -7,13 +8,14 @@ from operator import methodcaller as mc
 import numpy as np
 import matplotlib.pyplot as plt
 from utils import slider
+
 #G = nx.read_pajek('Sampson.paj')
 def drawgraph(G, edgekey='weight', big=False, **kwargs):
     if big: fig = plt.figure(figsize = (15, 10))
     pos=nx.spring_layout(G)
     nx.draw_networkx(G, pos=pos, **kwargs)
     if edgekey:
-        edge_labels=dict([((u,v,),d[edgekey])
+        edge_labels=dict([((u,v,),d.get(edgekey, ''))
                          for u,v,d in G.edges(data=True)])
         nx.draw_networkx_edge_labels(G,pos,edge_labels=edge_labels)#, **kwargs)
     plt.show()
@@ -29,11 +31,13 @@ def info_fromkmer(kmer):
 yield_pathgraph = compose(F(imap, info_fromkmer), slider)
 #pathlist = compose(list, yield_pathgraph)
 #use reduce
-def make_pathgraph(s, k=None):
-    G = nx.DiGraph()
-    if type(s) == list and not k:
+def make_debruijn(s, k=None):
+    G = nx.MultiDiGraph()
+    if not k:
        G.add_edges_from(imap(info_fromkmer, s))
-    G.add_edges_from(yield_pathgraph(s, k))
+    else:
+        #build straight from string
+       G.add_edges_from(yield_pathgraph(s, k))
     return G
 
 
@@ -48,6 +52,7 @@ until graphexplored:
 '''
 filterfalse = compose(list, ifilterfalse)
 def walk(G, vstd, cycle, start, current=None, call=0):
+    #TODO: I think this leaves out the final step of the cycle.
     if start == current: return vstd, cycle# + tuple([current])
     #NOTE: checking for boolean of 0 is bad here haha
     #_current = start if current else current
@@ -59,8 +64,13 @@ def walk(G, vstd, cycle, start, current=None, call=0):
     return walk(G,  vstd | set([edge]), cycle + tuple([nn]), start, nn, call+1)
 
 filterfst = compose(next, ifilter)
+def edges_of_path(G, p):
+    return map(X[0]['kmer'], starmap(F(G.get_edge_data), slider(p, 2)))
+reconstruct_str = compose_all(''.join, pmap(''.join), edges_of_path)
 
 def e_cycle(G, vstd=set(), cycle=(), call=0):
+    ''' find a Eulerian path in a graph by iteratively expanding a cycle.
+    requires a mostly-balanced and connected graph.'''
     if len(vstd) == len(G.edges()): return cycle
 
     def valid(N):
@@ -75,12 +85,16 @@ def e_cycle(G, vstd=set(), cycle=(), call=0):
     _vstd, _cycle = walk(G,  vstd, cycle, valid_start)
     return e_cycle(G, _vstd, _cycle, call+1)
 
+def k_circular(k):
+    kmers = tuple(itertools.product(*(['01']*k)))
+    global kg
+    kg= make_debruijn(kmers)
+    return e_cycle(kg)
 
-
-
+k_circular(3)
 _in = "TAATGCCATGGGATGTT"
-res = make_pathgraph(_in, 3)
-#drawgraph(res, edgekey='kmer')
+res = make_debruijn(_in, 3)
+drawgraph(res, edgekey='kmer')
 G = nx.DiGraph()
 G.add_edges_from([(0 , 3),
 (1 , 0),

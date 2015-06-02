@@ -1,0 +1,50 @@
+
+digraph () {
+Turkey;
+Horse;
+Civet;
+9;
+10;
+11;
+12;
+13;
+14;
+15;
+Cow;
+Dog;
+Cat;
+Pig;
+Human;
+Mouse;
+Turkey -> 13  [len=48.0];
+Horse -> 10  [len=14.0];
+Civet -> 15  [len=.90];
+Cow -> 9  [len=14.0];
+15 -> Civet  [len=.90];
+15 -> 14  [len=45.0];
+15 -> Human  [len=.70];
+9 -> 10  [len=1.0];
+9 -> Cow  [len=14.0];
+9 -> Pig  [len=14.0];
+10 -> 9  [len=1.0];
+10 -> Horse  [len=14.0];
+10 -> 11  [len=8.0];
+11 -> 10  [len=8.0];
+11 -> Mouse  [len=25.0];
+11 -> 14  [len=24.0];
+12 -> 13  [len=16.0];
+12 -> Dog  [len=40.0];
+12 -> Cat  [len=41.0];
+Dog -> 12  [len=40.0];
+14 -> 11  [len=24.0];
+14 -> 13  [len=2.0];
+14 -> 15  [len=45.0];
+Pig -> 9  [len=14.0];
+Human -> 15  [len=.70];
+Cat -> 12  [len=41.0];
+Mouse -> 11  [len=25.0];
+13 -> Turkey  [len=48.0];
+13 -> 12  [len=16.0];
+13 -> 14  [len=2.0];
+}
+

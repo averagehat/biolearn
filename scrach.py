@@ -1,6 +1,6 @@
 from trees import get_products, parse_line
 from numbers import Number
-from func import typecheck, compose, ilen, pmap
+from func import typecheck, compose, ilen, pmap, dictzip
 import networkx as nx
 from itertools import starmap, imap, ifilter, takewhile, ifilterfalse
 import numpy as np
@@ -22,10 +22,13 @@ def fst_or_none(func, seq):
     res = filter(func, seq)
     return None if not res else res[0]
 filterfst = compose(next, ifilter)
+
 def nondiag(D, i):return list(set(range(len(D))) - set([i]) )
 ndiag_perms = compose(get_products, nondiag)
 
 def limbmatch(D, n):
+    ''' find nodes i and k such that they satisfie the linear equation:
+        D_ik = D_in + D_nk'''
     #print np.isnan(D[n]).all()
     def match(tup):
         i, k = tup
@@ -34,8 +37,8 @@ def limbmatch(D, n):
     return filterfst(match, leaf_perms)
 
 @typecheck(np.ndarray, Number)
-#NOTE: I had a problem with this function returning NAN.
 def limbmin(D, j):
+    '''Same as limblen but also return i & k; not useful.'''
     def LL(i, k): return (D[i,j] + D[j,k] - D[i,k])/2, i, k
     nondiag = set(range(len(D))) - set([j])
     leaf_perms = get_products(nondiag)
@@ -44,6 +47,10 @@ def limbmin(D, j):
 
 @typecheck(np.ndarray, Number)
 def limblen(D, j):
+    '''given a distance matrix *D* and leaf index *j*, return the
+    length of the limb which *j* could be added to the simple tree
+    represented by *D*.'''
+    #NOTE: I had a problem with this function returning NAN.
     def LL(i, k): return (D[i,j] + D[j,k] - D[i,k])/2
     nondiag = set(range(len(D))) - set([j])
     leaf_perms = get_products(nondiag)
@@ -52,7 +59,7 @@ def limblen(D, j):
 
 
 def simplepath(G,  dest, vstd=set(), path=(), source=0):
-    ''' find a path in a simple graph. '''
+    ''' find a (unique) path in a simple graph. '''
     if source == dest:
         return path + tuple([dest])
     else:
@@ -92,19 +99,23 @@ get_weight = compose(_['weight'], nx.DiGraph.get_edge_data)
 #NOTE: nx constructor does not handle np.masked array properly
 def add_phylo(D, n, draw=False):
     '''build a simple unrooted phylogenetic tree from a distance matrix.'''
-    #if len(D) > 9: print D[9]
     if n == 1: return fromnp(D) #nx.from_numpy_matrix(D)
+    '''compute the length of the limb we will attach n to.'''
     ll = limblen(D, n)
     D[n] -= ll; D[:, n] -= ll
     _i, _k = limbmatch(D, n)
     x = D[_i, n]
+    '''remove n from the distance matrix.'''
     D[n] = D[:, n] = nan
+    #recursive tree creation; D.copy unecessary, used for debugging
     T = add_phylo(D.copy(), n-1)
+    ''' find the nodes to put the new internal node (witch we attach to n) between. '''
     v = node_along_path_matching_weight(T, _i, _k, x)
     if len(v) == 1:
     #NOTE: this never happens
          T.add_edge(v, n, {'weight' : ll})
     else:
+         ''' add node N and any needed internal node to the graph.'''
          if draw: drawgraph(T)
          #i and k are the nodes that the inserted node lies between.
          ''' there are two cases here. '''
@@ -124,6 +135,7 @@ def add_phylo(D, n, draw=False):
              T.remove_edge(i, k)
              T.remove_edge(k, i)
          #TODO: factor out
+         ''' add the new internal node and update the relevant lengths.'''
          T.add_edge(n, nv, {'weight' : ll})
          T.add_edge(nv, n, {'weight' : ll})
          T.add_edge(i, nv, {'weight' : z})
@@ -141,7 +153,8 @@ if v is not a new node, it may need to be replaced and re-connected with a new i
 
 def fixed_lines(raw): return ifilter(str.strip, raw.splitlines())
 def make_nxgraph(data, edgekey='weight'):
-    ''':param data: list of tuples of form (from, to, edge_info)'''
+    ''':param data: list of tuples of form (from, to, edge_info)
+        :return nx.DiGraph with *data* edges.'''
     G = nx.DiGraph()
     _data = [(d[0], d[1], {edgekey : d[2]}) for d in data]
     G.add_edges_from(_data)
@@ -192,6 +205,7 @@ ac = test_basic()
 ex = add_phylo(np.array([[0, 21], [21, 0]]), 1)
 pathed = simplepath(ex, 1)
 def parseM(raw):
+    '''parse & return a space-seperated matrix.'''
     _in = filter(bool, raw.split('\n'))
     return  np.matrix(map(pmap(float), map(str.split, _in)))
 
@@ -225,6 +239,7 @@ M= parseM('''0 3036 4777 1541 2766 6656 2401 4119 7488 4929 5344 3516 1485 6392 
 9010 10556 5809 8287 6804 2604 9921 6205 2144 12449 4226 11036 8359 4346 7416 10736 14528 2694 8707 3401 7197 13782 13673 5407 14190 12517 0 4899 1758
 5793 7339 2592 5070 3587 2545 6704 2988 3377 9232 1233 7819 5142 2281 4199 7519 11311 3095 5490 2380 3980 10565 10456 2190 10973 9300 4899 0 4921
 9032 10578 5831 8309 6826 2626 9943 6227 2166 12471 4248 11058 8381 4368 7438 10758 14550 2716 8729 3423 7219 13804 13695 5429 14212 12539 1758 4921 0'''  )
+
 G1 = add_phylo(M, len(M) - 1)
 print adj_str(G1)
 M=parseM('''
@@ -260,3 +275,21 @@ print adj_str(G2)
 exp = open('expaddphylo.txt').read().strip()
 assert adj_str(G2) == exp
 'Test Passed.'
+
+names='Cow Pig Horse   Mouse   Dog Cat Turkey  Civet   Human'.split()
+mapping = dict(enumerate(names))
+
+
+real = parseM(''' 0   295 306 497 1081    1091    1003    956 954
+ 295 0   309 500 1084    1094    1006    959 957
+   306 309     0   489 1073    1083    995 948 946
+   497 500 489 0   1092    1102    1014    967 965
+ 1081    1084    1073    1092    0   818 1056    1053    1051
+ 1091    1094    1083    1102    818 0   1066    1063    1061
+1003    1006    995 1014    1056    1066    0   975 973
+956 959 948 967 1053    1063    975 0   16
+954 957 946 965 1051    1061    973 16  0''')
+
+
+RG = add_phylo(real, len(real) - 1)
+nx.relabel_nodes(RG, mapping)
