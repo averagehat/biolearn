@@ -31,6 +31,11 @@ def content(acc, x):
 print tuple(accumulate(imap(gc, s), content))
 
 
+'''
+use accumulate for a histogram
+use partition to histogram with colors
 
+
+'''
 
 
