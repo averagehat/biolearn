@@ -2,7 +2,7 @@ import numpy as np
 from fn import F
 import networkx as nx
 from itertools import repeat
-from scrach import parseM
+from scrach import parseM, adj_str
 
 def min_matrix_ij(M):
     ''' :return indices (i, j) for the minimum element in the matrix.
@@ -22,6 +22,7 @@ def UPGMA(m):
     '''number of clusters = N (in an NxN matrix).'''
     '''First, create a double-sized matrix to make it easy to replace clusters.
     Actually, should just right over one of the rows at random? I think. '''
+    n = m.shape[0]
     M = np.full((n*2, n*2), np.inf)
     M[0:n, 0:n] = m
     ''' the mask is needed to skip diagonals.'''
@@ -92,3 +93,11 @@ G = UPGMA(m)
     #M.mask[c1] = M.mask[c2] = M.mask[:, c1] = M.mask[:, c2] = np.inf
     #M.mask[C] = M.mask[:, C] = False
     #M.mask[c1] = M.mask[c2] = M.mask[:, c1] = M.mask[:, c2] = True
+
+extraM = open('extraupgma.txt').read()
+eM = parseM(extraM)
+AG = UPGMA(eM)
+actual = adj_str(AG, as_float=True).strip()
+exp = open('upgmaexp.txt').read().strip()
+assert sorted(exp) == sorted(actual), "failed"
+print 'passed'

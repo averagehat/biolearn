@@ -11,10 +11,14 @@ from utils import slider
 from assembly import drawgraph
 from numpy import nan
 
-def to_adj_list(G, edgekey='weight'):
+def to_adj_list(G, edgekey='weight', bothways=True, as_float=False):
     edges = sorted(ifilterfalse(lambda x: x[0] ==x[1], G.edges(data=True)))
-    res = map(lambda x: (x[0], x[1], int(x[-1]['weight'])), edges)
-    form="{0}->{1}:{2}".format
+    if as_float:
+        res = map(lambda x: (x[0], x[1], float(x[-1]['weight'])), edges)
+        form = "{0}->{1}:{2:.3f}\n{1}->{0}:{2:.3f}".format
+    else:
+        res = map(lambda x: (x[0], x[1], int(x[-1]['weight'])), edges)
+        form="{0}->{1}:{2}".format if not bothways else "{0}->{1}:{2}\n{1}->{0}:{2}".format
     return starmap(form, res)
 adj_str = compose('\n'.join, to_adj_list)
 
@@ -273,7 +277,7 @@ M=parseM('''
 G2 = add_phylo(M, len(M) - 1)
 print adj_str(G2)
 exp = open('expaddphylo.txt').read().strip()
-assert adj_str(G2) == exp
+assert adj_str(G2, bothways=False) == exp
 'Test Passed.'
 
 names='Cow Pig Horse   Mouse   Dog Cat Turkey  Civet   Human'.split()

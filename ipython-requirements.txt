@@ -1,0 +1,12 @@
+pdb
+ipdbplugin
+numpy
+biopython
+mock
+nose
+pandas
+pydot
+networkx
+scipy
+scikit
+matplotlib 

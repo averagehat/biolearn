@@ -1,0 +1,26 @@
+create and write/type outline
+
+break into pieces if necessary
+
+explore and test those pieces, ie, how take the some of all cross-products of uneven size matrices?
+
+
+#of clusters = N (in an NxN matrix). 
+keep track of nodes to assign by initializing them, saving them in a list/graph(by cluster), and indexing them later.
+You are not removing anything from this graph, because these are leaves. you are only building initernal nodes upward
+find minimum element in the matrix (this is distance; no computations required)
+remove selected clusters from the matrix, and replace with the root (set as mean value). 
+set the distances of the root to be equal to the mean of the distnaces in the clusters (to all other clusters)
+build the subtree with limb-lengths D/2 connected root two the two clusters. 
+
+save this root
+get the tree by building off this new (smaller) matrix
+
+insects and dinosaurs
+
+do the root-saving by 
+
+
+(a == a.min()).nonzero()
+
+

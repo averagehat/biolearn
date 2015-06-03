@@ -1,9 +1,26 @@
 from __future__ import print_function
-from func import compose_all, compose, starcompose, dictzip
+from func import compose_all, compose, starcompose, dictzip, ilen
 from fn import F, _ as X
 from itertools import groupby, starmap, imap, ifilter, izip
-from operator import methodcaller as mc
+from operator import methodcaller as mc, ne
 import numpy as np
+
+def quantify(iterable, pred=bool):
+    '''https://docs.python.org/2/library/itertools.html#recipes
+    "Count how many times the predicate is true"'''
+    return sum(imap(pred, iterable))
+
+def hamming(s1, s2):
+    assert len(s1) == len(s2)
+    return ilen(ifilter(bool, imap(ne, s1, s2)))
+
+def logcall(func):
+    def wrap(*args, **kwargs):
+        print( func.__name__)
+        print( args, kwargs)
+        #print formatAllArgs(args, kwargs)
+        return func(*args, **kwargs)
+    return wrap
 
 def slider(seq, window, start=0):#, stop=None):
     N = len(seq)
@@ -50,8 +67,6 @@ def make_ovrlp_graph(kmers):
 form = '{0} -> {1}'.format
 
 def printgraph(D, M):
-    global I
-    I = M
     with open('overlap.txt', 'w') as out:
         idx_kmer_map = dict(map(reversed, D.items()))
         for kmer, idx in D.items():
