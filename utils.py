@@ -1,15 +1,31 @@
 from __future__ import print_function
-from func import compose_all, compose, starcompose, dictzip, ilen
+from func import compose_all, compose, starcompose, dictzip, ilen, pmap
 from fn import F, _ as X
 from itertools import groupby, starmap, imap, ifilter, izip
 from operator import methodcaller as mc, ne
 import numpy as np
+import networkx as nx
+from matplotlib import pyplot as plt
+
+def parseM(raw):
+    '''parse & return a space-seperated matrix.'''
+    _in = filter(bool, raw.split('\n'))
+    return  np.matrix(map(pmap(float), map(str.split, _in)))
 
 def quantify(iterable, pred=bool):
     '''https://docs.python.org/2/library/itertools.html#recipes
     "Count how many times the predicate is true"'''
     return sum(imap(pred, iterable))
 
+def drawgraph(G, edgekey='weight', big=False, **kwargs):
+    if big: fig = plt.figure(figsize = (15, 10))
+    pos=nx.spring_layout(G)
+    nx.draw_networkx(G, pos=pos, **kwargs)
+    if edgekey:
+        edge_labels=dict([((u,v,),d.get(edgekey, ''))
+                         for u,v,d in G.edges(data=True)])
+        nx.draw_networkx_edge_labels(G,pos,edge_labels=edge_labels)#, **kwargs)
+    plt.show()
 def hamming(s1, s2):
     assert len(s1) == len(s2)
     return ilen(ifilter(bool, imap(ne, s1, s2)))
@@ -23,18 +39,14 @@ def logcall(func):
     return wrap
 
 def slider(seq, window, start=0):#, stop=None):
+    '''assert list(slider([0, 1, 2], 2)) == [ [0,1], [1,2] ]
+    assert list(slider('ABCDE', 4)) == [ 'ABCD', 'BCDE' ]
+    assert list(slider('ABCDE', 1)) == list('ABCDE')'''
     N = len(seq)
     for idx  in xrange(N-window+1):
         yield seq[idx:idx+window]
 
 filterfst = compose(next, ifilter)
-
-assert list(slider([0, 1, 2], 2)) == [ [0,1], [1,2] ]
-
-assert list(slider('ABCDE', 4)) == [ 'ABCD', 'BCDE' ]
-
-
-assert list(slider('ABCDE', 1)) == list('ABCDE')
 composition = compose_all(sorted, list, slider)
 
 def fromstr(_in):
@@ -76,7 +88,6 @@ def printgraph(D, M):
 getkmers = compose(F(filter, str.strip), mc('split', '\n'))
 slv_overlap=compose(starcompose(printgraph, make_ovrlp_graph), getkmers)
 
-#slv_overlap(open('../../Downloads/rosalind_4b.txt').read())
 
 exp='''
 AGGCA -> GGCAT
@@ -90,4 +101,50 @@ CATGC
 AGGCA
 GGCAT
 '''
+
+def allbut(end, excluding):
+    ''' get range(0, end) excluding one element '''
+    if excluding < end: return range(start or 0, excluding) + range(excluding + 1, end)
+    else: return range(0, end)
+
+def emptygraph(N):
+    G = nx.Graph()
+    ''' add blank nodes to ease the construction of the graph.'''
+    #G.add_nodes_from(zip(xrange(N), [dict(weight=0) for i in xrange(N)]))
+    G.add_nodes_from(xrange(N))
+    return G
+
+
+#def prepmatrix(m):
+#     M = doublematrix(m)
+#     M[np.diag_indices(len(M))] = np.inf
+#     return M
+
+def min_matrix_ij(M):
+    ''' :return indices (i, j) for the minimum element in the matrix.
+    assumes diagonals != 0 or are masked. '''
+    return np.unravel_index(M.argmin(), M.shape)
+
+def doublematrix(m):
+    n = m.shape[0]
+    #M = np.full((n*2, n*2), 0)
+    M = np.zeros((n*2, n*2), 0)
+    M[0:n, 0:n] = m
+    return M
+
+import traceback
+def pvar(__x):
+        print (traceback.extract_stack(limit=2)[0][3][6:][:-1],"=",__x)
+
+
+
+
+
+
+
+
+
+
+
+
 
