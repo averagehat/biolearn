@@ -1,11 +1,23 @@
 from __future__ import print_function
 from func import compose_all, compose, starcompose, dictzip, ilen, pmap
 from fn import F, _ as X
-from itertools import groupby, starmap, imap, ifilter, izip
+from itertools import groupby, starmap, imap, ifilter, izip, ifilterfalse
 from operator import methodcaller as mc, ne
 import numpy as np
 import networkx as nx
 from matplotlib import pyplot as plt
+
+
+def to_adj_list(G, edgekey='weight', bothways=True, as_float=False):
+    edges = sorted(ifilterfalse(lambda x: x[0] ==x[1], G.edges(data=True)))
+    if as_float:
+        res = map(lambda x: (x[0], x[1], float(x[-1]['weight'])), edges)
+        form = "{0}->{1}:{2:.3f}\n{1}->{0}:{2:.3f}".format
+    else:
+        res = map(lambda x: (x[0], x[1], int(x[-1]['weight'])), edges)
+        form="{0}->{1}:{2}".format if not bothways else "{0}->{1}:{2}\n{1}->{0}:{2}".format
+    return starmap(form, res)
+adj_str = compose('\n'.join, to_adj_list)
 
 def parseM(raw):
     '''parse & return a space-seperated matrix.'''
@@ -102,7 +114,7 @@ AGGCA
 GGCAT
 '''
 
-def allbut(end, excluding):
+def allbut(end, excluding, start=0):
     ''' get range(0, end) excluding one element '''
     if excluding < end: return range(start or 0, excluding) + range(excluding + 1, end)
     else: return range(0, end)
@@ -135,6 +147,26 @@ def doublematrix(m):
 import traceback
 def pvar(__x):
         print (traceback.extract_stack(limit=2)[0][3][6:][:-1],"=",__x)
+
+
+def write_graph(inputf, outf, func):
+    extraM = open(inputf).read()
+    eM = parseM(extraM)
+    AG = func(eM)
+    _actual = adj_str(AG, as_float=True).strip()
+    with open(outf, 'w') as out:
+        print(_actual, file=out)
+
+
+def test_graph(inputf, expf, func):
+    extraM = open(inputf).read()
+    eM = parseM(extraM)
+    AG = func(eM)
+    _actual = adj_str(AG, as_float=True).strip()
+    _exp = open(expf).read().strip()
+    exp, act = sorted(_exp.split()), sorted(_actual.split())
+    assert exp == act, 'failed'
+    print( 'passed')
 
 
 

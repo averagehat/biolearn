@@ -296,4 +296,4 @@ real = parseM(''' 0   295 306 497 1081    1091    1003    956 954
 
 
 RG = add_phylo(real, len(real) - 1)
-nx.relabel_nodes(RG, mapping)
+RG = nx.relabel_nodes(RG, mapping)
