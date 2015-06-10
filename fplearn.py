@@ -295,7 +295,7 @@ alpha = list('AGCT')
 seq = ''.join( choice(alpha) for _ in xrange(N) )
 '''or '''
 from fn.iters import repeatfunc
-seq = ''.join(repeatfunc(F(choice, alphas), N))
+seq = ''.join(repeatfunc(F(choice, alpha), N))
 gcl = compose(list, gc_hist)
 '''
 In [257]: %timeit res = np_gc_hist(seq)
