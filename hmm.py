@@ -3,7 +3,7 @@ from __future__ import division
 from fplearn import Ratio
 import numpy as np
 import string
-from itertools import dropwhile
+from itertools import dropwhile, starmap
 import pandas as pd
 from func import starcompose, partial2
 import math
@@ -12,6 +12,7 @@ from utils import slider
 from fn import F, _
 import operator
 from fn.iters import filterfalse
+
 d = {'A' : 0, 'B' : 1}
 od = {0 : 'A', 1 : 'B', 2 : 'C', 3 : 'D'  }
 ed = {'x':0, 'y':1,'z':2}
@@ -240,14 +241,22 @@ def hmmprofile(C, theta):
 def hmmprofile(C, theta):
     N = C.shape[0]
     seqlen = C.shape[1]
+    alphabet = set( C.ravel() ) - set(['-'])
     #df = makedf(seqlen+1) #, Ratio(0, 0))
     is_insert = ((C == EMPTY).sum(axis=0) / N ) > theta
     df = makedf((~is_insert).sum()+1) #, Ratio(0, 0))
-    df[:] = Ratio(0, 0)
-    def update(p, s):
+    EM = pd.DataFrame(0, columns=sorted(alphabet), index=df.index)
+    df[:] = EM[:] = Ratio(0, 0)
+    def update(df, p, s):
         current = df.loc[p, s]
         df.loc[p, s] = Ratio(current.numerator + 1, current.denominator)
         df.loc[p] = map(add_denom, df.loc[p])
+    def update_em(df, state, ltr):
+        if ltr != '-':
+            df.loc[state] = map(add_denom, df.loc[state])
+            current = df.loc[state, ltr]
+            df.loc[state, ltr] = Ratio(current.numerator + 1, current.denominator)
+
     prev = 'S'
     for seq in C:
         for i, ltr in enumerate(seq):
@@ -257,9 +266,11 @@ def hmmprofile(C, theta):
                 else: continue
             if not is_insert[i]:
                 state = st('D', i+1 - off) if ltr == '-' else st('M', i+1 - off)
-            update(prev, state)
+            update(df, prev, state)
+            update_em(EM, state, ltr)
             prev = state
-        update(prev, 'E')
+        update(df, prev, 'E')
+        #update_em(EM, 'E', ltr)
         prev = 'S'
         l = {'M' : 0, 'D' : 1, 'I' : 2, 'S' : -1, 'E' : 9999999}.__getitem__
     def eval(x):
@@ -271,7 +282,7 @@ def hmmprofile(C, theta):
     #df = df[cols]
     df= df[cols].applymap(float)
     idx = sorted(df.index, key=eval)
-    return df.loc[idx]
+    return df.loc[idx], EM.loc[idx].applymap(float)
 
 
 raw = '''
@@ -295,16 +306,91 @@ ECD--CA--'''
 C =  makeC(raw)
 df2 = hmmprofile(C, theta=0.28)
 
-raw = '''
+#raw = '''
+#DCDABACED
+#DCCA--CA-
+#DCDAB-CA-
+#BCDA---A-
+#BC-ABE-AE
+#'''
+#C =  makeC(raw)
+#df3 = hmmprofile(C, theta=0.28)
+#raw = '''\nEBA\n E-D\n EB-\n EED\n EBD\n EBE\n E-D\n E-D\n '''
+#C =  makeC(raw)
+#theta=.289
+#df = make_hmm(C, theta=0.289)
+#df = hmmprofile(C, theta=0.289)
+
+#raw='''
+#ECAEDCEED
+#A-AEDC--A
+#ECA-DEA-A
+#ECAED--EA
+#ECACDCA-A
+#EDAEDC-EC
+#ECAEABAEA
+#BBAEDDA--'''
+#theta=0.272
+raw='''
 DCDABACED
 DCCA--CA-
 DCDAB-CA-
 BCDA---A-
 BC-ABE-AE
 '''
+theta=.252
+#theta=0.363
+raw='''
+D-ECB-ABE
+D--CBAACE
+D--CB-DAE
+-EECBAACE
+DBECBAAC-
+DECBBAECD
+DEBEBAEED'''
+
+theta=.333
 C =  makeC(raw)
-df3 = hmmprofile(C, theta=0.28)
-raw = '''\nEBA\n E-D\n EB-\n EED\n EBD\n EBE\n E-D\n E-D\n '''
-C =  makeC(raw)
-#df = make_hmm(C, theta=0.289)
-df = hmmprofile(C, theta=0.289)
+opts=[
+('display.float_format',lambda x: ('%.3f' % x) if x != 0 else str(0),),
+('display.max_columns', None,),
+('display.max_info_rows', 1690785,),
+('display.expand_frame_repr', False,),
+('display.chop_threshold', None,),]
+for a, b in opts:
+     pd.set_option(a, b)
+#starmap(pd.set_option, opts)
+
+
+
+
+
+
+import re
+df, em =  hmmprofile(C, theta=theta)
+res= '\n--------\n'.join([str(df), str(em)])
+res = re.sub(' +', '\t', res)
+#with open('e', 'w') as out: out.write(res)
+assert res == open('e').read()
+print 'passed'
+
+raw='''
+A-A
+ADA
+ACA
+A-C
+-EA
+D-A'''
+theta=.358
+df, em =  hmmprofile(C, theta=theta)
+res= '\n--------\n'.join([str(df), str(em)])
+res = re.sub(' +', '\t', res)
+print res
+
+
+#NOTE: pseudocounts
+'''
+(s + 0.01) / (s + 0.01).sum()
+array([ 0.8184466 ,  0.17184466,  0.00970874])
+s = df.loc['S'][1:4]
+'''

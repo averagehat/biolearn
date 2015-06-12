@@ -3,6 +3,7 @@ from func import apply_each, compose
 from functools import partial
 from itertools import repeat
 import operator as op
+from utils import slider
 import numpy as np
 #compute distance for a ll centers from all points
 #transofrm matrix via
@@ -67,4 +68,24 @@ print hm
 
 
 
+from itertools import product
+from fn import F
+import operator as op
+s = 'ACGCGGCTCTGAAA'
+k = 2
+kmers = sorted(map(''.join, product(*([list('ACGT')]*k))))
+cnt_with_overlap = lambda x: sum(map(lambda y: x==y, slider(s, len(x))))
+print map(cnt_with_overlap, kmers)
 
+sym_num = {'A':0,'C':1,'G':2,'T':3}.__getitem__
+def sym(acc, c):
+    return sym_num(x) + sym_num(y)
+
+sum(map(sym_num, 'AGT'))
+
+
+
+def ptn(s):
+    if s == '': return 0
+    else:
+        return (4*ptn(s[:-1])) + sym_num(s[-1])
