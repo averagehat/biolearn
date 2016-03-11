@@ -39,7 +39,9 @@ mypy enforces the safety of common operators. This avoids meaningless comparison
 ```python
 point.x + "Eureka"
 foo.py:10: error: Unsupported operand types for + ("float" and "str")
-x = point.x # mypy infers the type after assignment:
+
+x = point.x # mypy infers the type after assignment
+
 x > "Eureka"
 foo.py:10: error: Unsupported operand types for > ("float" and "str")
 ```
@@ -49,7 +51,7 @@ mypy limits attribute access:
 sneaky = point.gecko
 foo.py:13: error: "Point3D" has no attribute "gecko"
 ```
-mypy supports generics. A generic can be a lot of things; A `list`, an `Iterable`, or something equivalent to scala/java 8's `Option` type. mypy comes equipped with a number of generic types; take for example `List`, which is an alias for the built-in `list`.
+mypy supports generics. A generic can be a lot of things; A `list`, an `Iterable`, or something equivalent to scala/java 8's `Option` type. If a generic is a collection, all elements of the collection must be of the same type. mypy comes equipped with a number of generic types; take for example `List`, which is an alias for the built-in `list`.
 ```python 
 ListOfInts = List[int]
 ```
@@ -57,7 +59,15 @@ ListOfInts = List[int]
 You can also create types by subclassing `Generic`.
 ```python
 class Option(Generic[T]):
-    pass
+    def getOrElse(t: T) -> T:
+       . . . 
+```
+It's possible to use multiple type variables within a generic:
+```python
+E = TypeVar("E")
+V = TypeVar("V")
+class Either(Generic[E,V]):
+    . . . . 
 ```
 
 Let's use `List` and `3DPoint` to create a more complex product type: `Robot Legs`.
@@ -78,7 +88,7 @@ def getColor(legs: RobotLegs) -> int:
          . . . . 
 ```
 That's a hassle, and it's easy to forget to do these checks in every function. Instead, let's nip this in the bud. 
-We really want to make 
+We really want to make it is easy on ourselves and be *really really sure* that we only have to validate our input once. We can do all the validation--cleaning up data from I/O, verifying it matches a certain shape, creating errors etc.--when we construct the instances of our types. That way all functions which accept those types are relieved from the obligation of checking themselves.
 ```python
 SkyBlue = NamedTuple("SkyBlue", [])
 PastelRed = NamedTuple("PastelRed", [])
