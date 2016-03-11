@@ -34,7 +34,7 @@ foo.py:10: error: Tuple index out of range
 mypy enforces the safety of common operators. This avoids meaningless comparisons, for example, which are uncaught by python's runtime:
 ```python
 >>> "foo" > sys.maxint
-> True # sure, why not?
+ True # sure, why not?
 ```
 point.x + "Eureka"
 foo.py:10: error: Unsupported operand types for + ("float" and "str")
