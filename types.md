@@ -1,3 +1,4 @@
+### Introduction to mypy
 [A recent pep](https://www.python.org/dev/peps/pep-0484/) solidifies type annotations in python 2 and 3. These type annotations are compatible with current versions of python. 
 They can be ignored altogether, used however you wish in your own program, or used to typecheck your code with [mypy](github.com/python/mypyp).
 This post will discuss the last option. Later we'll see how python's strong introspective powers can be used to leverage these types in conjunction with
