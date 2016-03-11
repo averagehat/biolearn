@@ -148,8 +148,8 @@ foo.py:35: error: Some element of union has no attribute "ammo"
 Great! we've created an API that's clear, self-documenting, and compartively safe. We've provided some limited guarantees of correctness;
 and our domain is well-defined, which will help us reason about our past and future code moving forward.
 mypy is a growing project; it's still in an early stage and being actively developed. It's become an official
-part of they [python](github.com/python) flock as the definitive optional typechecker; it's got the backing
-and infolvement of [python's creat](https://en.wikipedia.org/wiki/Guido_van_Rossum).
+part of they [python](github.com/python) flock as the definitive optional typechecker; it's got the [backing](https://github.com/python/mypy/issues/1276#issuecomment-192981427)
+and [involvement](https://github.com/python/mypy/pull/1277) of [python's creator](https://en.wikipedia.org/wiki/Guido_van_Rossum).
 
 Although mypy is still in active development, it can be a profitable tool right now. It's not a compiler, and it never touches
 your code, so it can be used without much concern for bugs. It takes some extra time to annotate python with types--I've demonstrated
