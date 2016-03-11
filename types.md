@@ -24,10 +24,10 @@ It can be created and accessed just like `collections.namedtuple.`
 ```python
 point = Point3D(0, 1.0, 3.98)
 x = point.x
-y = point[1] # this works, it probably shouldn't
+y = point[1] # this typechecks, it probably shouldn't
 ```
 mypy knows how long the tuple is, and what types its members are!
-```
+```python
 r = point[99]
 foo.py:10: error: Tuple index out of range
 ```
@@ -36,6 +36,7 @@ mypy enforces the safety of common operators. This avoids meaningless comparison
 >>> "foo" > sys.maxint
  True # sure, why not?
 ```
+```python
 point.x + "Eureka"
 foo.py:10: error: Unsupported operand types for + ("float" and "str")
 x = point.x # mypy infers the type after assignment:
