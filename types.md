@@ -48,24 +48,48 @@ mypy limits attribute access:
 sneaky = point.gecko
 foo.py:13: error: "Point3D" has no attribute "gecko"
 ```
-Robot Legs.
+mypy supports generics. A generic can be a lot of things; A `list`, an `Iterable`, or something equivalent to scala/java 8's `Option` type. mypy comes equipped with a number of generic types; take for example `List`, which is an alias for the built-in `list`.
+```python 
+ListOfInts = List[int]
+```
+
+You can also create types by subclassing `Generic`.
+```python
+class Option(Generic[T]):
+    pass
+```
+
+Let's use `List` and `3DPoint` to create a more complex product type: `Robot Legs`.
 
 ```python
-RobotLegs = NamedTuple("RobotLegs", [("leftLeg" 
+RobotLegs = NamedTuple("RobotLegs", [("leftLeg", List[Point3D]), ("rightLeg", List[Point3D]), ("color", str)])
+```
+Note that we've defined the field `color` as simply a string, allowing us to create robot legs with nonsense colors. It's also possible to create robot legs with negative integers for coordinates!
+```python
+blueRobot = RobotLegs(points, points, "fizbizzle")
+```
+Of course, we could check for this condition in the functions that use the color:
+```python
+def getColor(legs: RobotLegs) -> int:
+    if legs.color not in ["blue", "red", "green"]:
+        raise ValueError("Invalid color %s" % legs.color)
+    else:
+         . . . . 
+```
+That's a hassle, and it's easy to forget to do these checks in every function. Instead, let's nip this in the bud.
 
-Let's look at our previous example of calculating GC-content. Here is the first draft of the function which I wrote for the post.
+In fact it's possible to use this technique to *guarantee* that our function will only ever get valid input. It's only possible to construct the sum type of `RobotLegs` through the union type of `Color`; `Color` is by definition one of `Blue`, `Red`. . . 
+Additionally, we could create a `makeCoordnates` function that wrapped `Point3D`, and only created instances of `Point3D` if the floats passed to it were all positive. In languages with the concept of private constructors, it's possible to *guarantee* that a RobotLegs cannot be created an invalid state--and therefore that `getColor` can never be passed invalid data--by making the `RobotLegs` constructor private.
+
+Note that the assurance offered by static typing is significantly stronger than the contract offered by ducked typing. If we simply accepted an object with `leftLeg` `rightLeg` and `color` as a RobotLeg, we'd have no guarantees that these fields were valid, or even that they were the expected type!
+
 
 Functional programming principles can be productively applied even in small cases. The predictability and compositional capacity of small functions 
 allows for modular, extensible code. First-order functions can be used in a variety of generic higher-order functions or "combinators". 
 In the future, we will look at how static typing combined with immutability can make this code much safer as an additional benefit.
 
-```python
-def gc(seq):
-    '''(G+C)/(A+T+G+C) * 100'''
-    return seq.count('G') + seq.count('C') / float( len(seq) )
-```
 
-Do you see the error
+
 Let's use calculating [GC-content](https://en.wikipedia.org/wiki/GC-content) as an example.
 
 Where `seq` is some DNA sequence--just a string of characters composed soley of items in the set ```{'A', 'C', 'G', 'T'}```
