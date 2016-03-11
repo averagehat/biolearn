@@ -123,7 +123,6 @@ RobotLegs = NamedTuple("RobotArms", [("leftArm", List[Point3D]), ("rightArm", Li
 
 GiantRobot = NamedTuple('GiantRobot', [('weapon', Weapon), ('legs' , RobotLegs), ('arms', RobotArms)])
 
-```python
 def canFight(robot: GiantRobot) -> bool:
     if isinstance(robot.weapon, Rifle):
         return robot.weapon.ammo > 0
