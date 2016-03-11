@@ -76,13 +76,57 @@ def getColor(legs: RobotLegs) -> int:
     else:
          . . . . 
 ```
-That's a hassle, and it's easy to forget to do these checks in every function. Instead, let's nip this in the bud.
+That's a hassle, and it's easy to forget to do these checks in every function. Instead, let's nip this in the bud. 
+We really want to make 
+```python
+SkyBlue = NamedTuple("SkyBlue", [])
+Red = NamedTuple("Red", [])
+Green = NamedTuple("Green", [])
+
+Color = Union[Blue, Red, Green]
+
+RobotLegs = NamedTuple("RobotLegs", [("leftLeg", List[Point3D]), ("rightLeg", List[Point3D]), ("color", Color)])
+
+```
+Now we can be assured that our color is one of the primaries (always a good starting pint for giant robots), so we don't have to worry about validating our data again!
+
+```python
+def getColor(legs: RobotLegs) -> int:
+    if legs.color == SkyBlue():  return 0x87CEFA 
+    if isinstance(legs.color, SkyBlue): return  0x87CEFA # this is equivalent
+```
+
+We can even safely use a statically typed dictionary which never raise a KeyErorr:
+```python
+colors = { SkyBlue() : 0x87CEFA } # type: Dict[Color,int]
+. . . . 
+```
 
 In fact it's possible to use this technique to *guarantee* that our function will only ever get valid input. It's only possible to construct the sum type of `RobotLegs` through the union type of `Color`; `Color` is by definition one of `Blue`, `Red`. . . 
 Additionally, we could create a `makeCoordnates` function that wrapped `Point3D`, and only created instances of `Point3D` if the floats passed to it were all positive. In languages with the concept of private constructors, it's possible to *guarantee* that a RobotLegs cannot be created an invalid state--and therefore that `getColor` can never be passed invalid data--by making the `RobotLegs` constructor private.
 
 Note that the assurance offered by static typing is significantly stronger than the contract offered by ducked typing. If we simply accepted an object with `leftLeg` `rightLeg` and `color` as a RobotLeg, we'd have no guarantees that these fields were valid, or even that they were the expected type!
 
+`Color` is a very simple Union type, analogous to the "Enums" of other languages (including python 3), while providing additional safety. Bution union types are more powerful; it's possible to create a union type out of product types, and model arbitrary complex 
+systems this way. You can think of these types as representing the "set of all possible inputs and outputs" and functions accepting these types as representing the "cobminators" or "all the things I can ever do with my inputs". Together, these form a sort of "algebra" that represents your domain. In the domain of giant robots:
+
+```python
+Rifle = NamedTuple('Rifle', [('ammo' : int), ('model' : str)])
+Knife = NamedTuple('Knife', [('shape' : List[Point3D]), ('thatsNotAKnife', boolean)])
+
+weapon = Union[Rifle, Knife]
+
+RobotLegs = NamedTuple("RobotArms", [("leftArm", List[Point3D]), ("rightArm", List[Point3D]), ("color", Color)])
+
+GiantRobot = NamedTuple('GiantRobot', [('weapon', Weapon), ('legs' : RobotLegs), ('arms', RobotArms)])
+
+```python
+def canFight(robot: GiantRobot) -> bool:
+    if isinstance(robot.weapon, Rifle):
+        return robot.weapon.ammo > 0
+    else: return True
+```
+The `isinstance` check tells mypy that `robot.weapon` is specifically a rifle, and therefore has an `ammo` field of type `int`.
 
 Functional programming principles can be productively applied even in small cases. The predictability and compositional capacity of small functions 
 allows for modular, extensible code. First-order functions can be used in a variety of generic higher-order functions or "combinators". 
